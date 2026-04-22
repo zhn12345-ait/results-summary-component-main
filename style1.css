@@ -1,0 +1,190 @@
+body{
+    justify-content: center;
+    align-items: center;
+    background-color: hsl(221, 100%, 96%);
+}
+
+.tag{
+    width: 400px;
+    height: 500px;
+    background: linear-gradient(to bottom, hsl(252, 100%, 67%), hsl(241, 81%, 54%));
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    margin: 150px auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    right: 160px;
+    z-index: 2;
+}
+
+.tag-title{
+    color: hsl(241, 100%, 89%);
+    position: relative;
+    bottom: 10px;
+}
+
+.tag-score{
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(to bottom, hsla(256, 72%, 46%, 1), hsla(241, 72%, 46%, 0%));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    bottom: 10px;
+    z-index: 1;
+}
+
+.tag-score-h1{
+    font-size: 4rem;
+    color: hsl(0, 0%, 100%);
+}
+
+.tag-score-p{
+    color: hsl(241, 100%, 89%);
+    position: relative;
+    bottom: 40px;
+}
+
+.tag-h1{
+    font-size: 2rem;
+    color: hsl(0, 0%, 100%);
+    position: relative;
+    bottom: 10px;
+}
+
+.tag-p1{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    bottom: 15px;
+    color: hsl(241, 100%, 89%);
+}
+
+.tag-p2{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    bottom: 45px;
+    color: hsl(241, 100%, 89%);
+}
+
+.tag-p3{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    bottom: 75px;
+    color: hsl(241, 100%, 89%);
+}
+
+.tasks{
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    right: -800px;
+    bottom: 650px;
+    left: 750px;
+    width: 400px;
+    border-radius: 10px;
+    height: 500px;
+    background-color: hsl(0, 0%, 100%);
+}
+
+.tasks1{
+    position: relative;
+    left: 60px;
+    bottom: -20px;
+}
+
+.tasks2{
+    width: 300px;
+    height: 40px;
+    background-color: hsl(0, 87%, 76%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    gap: 10px;
+    padding: 0 12px;
+
+}
+.tasks2-img1{
+    width: 20px;
+    height: 20px;
+}
+
+.tasks2-p1{
+    position: relative;
+    top: -1px;
+}
+.tasks2-p2{
+    position: relative;
+    top: -1px;
+    right: -120px;
+}
+.tasks2-img1, .tasks2-p1, .tasks2-p2{
+    float: left;
+}
+
+.tasks3{
+    width: 300px;
+    height: 40px;
+    background-color: hsl(39, 91%, 75%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    gap: 10px;
+    padding: 0 12px;
+    top: 40px;
+}
+
+.tasks4{
+    width: 300px;
+    height: 40px;
+    background-color: hsl(166, 81%, 67%);
+    display: flex;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    gap: 10px;
+    padding: 0 12px;
+    top: 80px;
+}
+
+.tasks5{
+    width: 300px;
+    height: 40px;
+    background-color: hsl(244, 71%, 63%);
+    display: flex;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    gap: 10px;
+    padding: 0 12px;
+    top: 120px;
+}
+
+.tasks-p{
+    width: 320px;
+    height: 50px;
+    background-color: hsl(241, 90%, 60%);
+    border-radius: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    top: 160px;
+    left: 60px;
+}
