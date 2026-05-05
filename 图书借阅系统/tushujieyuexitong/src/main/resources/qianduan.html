@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图书借阅系统</title>
+    <style>
+        body { background: #f5f7fa; padding: 20px; font-family: "Microsoft YaHei"; }
+        #loginPage { width: 360px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px #ddd; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; }
+        button { width: 100%; padding: 10px; background: #409eff; color: white; border: none; border-radius: 6px; margin-top: 6px; cursor: pointer; }
+        .reg { background: #67c23a; }
+        #bookPage { display: none; }
+        .tool-bar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .tool-bar input { width: 160px; }
+        .tool-bar button { width: auto; padding: 8px 14px; }
+        table { width: 100%; background: white; border-radius: 8px; overflow: hidden; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #409eff; color: white; }
+        .status-0 { color: #67c23a; }
+        .status-1 { color: #f56c6c; }
+        .borrow-box { margin-top: 40px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="loginPage">
+    <h3>登录</h3>
+    <input id="userName" placeholder="用户名">
+    <input id="passWord" type="password" placeholder="密码" onkeydown="if(event.keyCode===13)login()">
+    <button onclick="login()">登录</button>
+    <button class="reg" onclick="goRegister()">注册</button>
+</div>
+
+<div id="bookPage">
+    <h2>📚 图书借阅系统</h2>
+    <div class="tool-bar">
+        <input id="searchName" placeholder="书名">
+        <input id="searchCategory" placeholder="分类">
+        <button onclick="searchBook()">搜索</button>
+        <button onclick="filterStatus(0)">可借</button>
+        <button onclick="filterStatus(1)">已借出</button>
+        <button onclick="loadBookList()">全部</button>
+        <button onclick="initData()">初始化数据</button>
+        <button id="addBookBtn" onclick="showAddModal()" style="background:#67c23a;display:none;">新增图书</button>
+        <button id="allBorrowBtn" onclick="showAllBorrow()" style="background:#ff9900;display:none;">全部借阅记录</button>
+        <button onclick="logout()">退出</button>
+    </div>
+
+    <table>
+        <tr>
+            <th>ID</th><th>书名</th><th>作者</th><th>分类</th><th>类型</th><th>状态</th><th>操作</th>
+        </tr>
+        <tbody id="bookTable"></tbody>
+    </table>
+
+    <!-- 新增弹窗 -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h3>新增图书</h3>
+            <input id="addBookName" placeholder="书名">
+            <input id="addAuthor" placeholder="作者">
+            <input id="addCategory" placeholder="分类">
+            <input id="addType" placeholder="类型">
+            <button onclick="doAddBook()">确认新增</button>
+            <button onclick="closeAddModal()" style="background:#999;margin-top:5px;">取消</button>
+        </div>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3>编辑图书</h3>
+            <input type="hidden" id="editId">
+            <input id="editBookName" placeholder="书名">
+            <input id="editAuthor" placeholder="作者">
+            <input id="editCategory" placeholder="分类">
+            <input id="editType" placeholder="类型">
+            <button onclick="doEditBook()">保存修改</button>
+            <button onclick="closeEditModal()" style="background:#999;margin-top:5px;">取消</button>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div class="modal" id="pwdModal">
+        <div class="modal-content">
+            <h3>修改密码</h3>
+            <input id="oldPwd" placeholder="原密码">
+            <input id="newPwd" placeholder="新密码">
+            <button onclick="doChangePwd()">确认修改</button>
+            <button onclick="closePwdModal()" style="background:#999;margin-top:5px;">取消</button>
+        </div>
+    </div>
+
+    <div class="borrow-box">
+        <h3>📄 我的借阅记录</h3>
+        <button onclick="loadMyBorrow()">查看我的借阅</button>
+        <button onclick="showPwdModal()" style="background:#67c23a;margin-left:5px;">修改密码</button>
+        <table style="margin-top:10px;">
+            <tr>
+                <th>图书ID</th><th>书名</th><th>借阅人</th><th>借阅时间</th><th>归还时间</th><th>状态</th>
+            </tr>
+            <tbody id="borrowTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let currentUser = "";
+    let currentRole = "";
+    const baseUrl = "http://localhost:8080";
+
+    // 登录
+    function login() {
+        let name = document.getElementById("userName").value.trim();
+        let pwd = document.getElementById("passWord").value.trim();
+        if (!name || !pwd) return alert("请输入账号密码");
+        let fd = new FormData();
+        fd.append("userName", name);
+        fd.append("passWord", pwd);
+        fetch(baseUrl + "/admin/login", { method: "POST", body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 200) {
+                    currentUser = name;
+                    currentRole = data.role;
+                    if (currentRole === 'admin') {
+                        document.getElementById("addBookBtn").style.display = "inline-block";
+                        document.getElementById("allBorrowBtn").style.display = "inline-block";
+                    }
+                    alert("登录成功！角色：" + currentRole);
+                    document.getElementById("loginPage").style.display = "none";
+                    document.getElementById("bookPage").style.display = "block";
+                    loadBookList();
+                } else {
+                    alert(data.msg);
+                }
+            })
+    }
+
+    // 新增图书
+    function showAddModal() { document.getElementById("addModal").style.display = "block"; }
+    function closeAddModal() { document.getElementById("addModal").style.display = "none"; }
+    function doAddBook() {
+        let bookName = document.getElementById("addBookName").value.trim();
+        let author = document.getElementById("addAuthor").value.trim();
+        let category = document.getElementById("addCategory").value.trim();
+        let type = document.getElementById("addType").value.trim();
+        if (!bookName || !author) { alert("书名、作者不能为空！"); return; }
+        let fd = new FormData();
+        fd.append("bookName", bookName);
+        fd.append("author", author);
+        fd.append("category", category);
+        fd.append("type", type);
+        fetch(baseUrl + "/book/add", { method: "POST", body: fd })
+            .then(res => res.text())
+            .then(msg => { alert(msg); closeAddModal(); loadBookList(); });
+    }
+
+    // 编辑图书
+    function showEditModal(item) {
+        document.getElementById("editId").value = item.id;
+        document.getElementById("editBookName").value = item.bookName;
+        document.getElementById("editAuthor").value = item.author;
+        document.getElementById("editCategory").value = item.category;
+        document.getElementById("editType").value = item.type;
+        document.getElementById("editModal").style.display = "block";
+    }
+    function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+    function doEditBook() {
+        let id = document.getElementById("editId").value;
+        let bookName = document.getElementById("editBookName").value.trim();
+        let author = document.getElementById("editAuthor").value.trim();
+        let category = document.getElementById("editCategory").value.trim();
+        let type = document.getElementById("editType").value.trim();
+        if (!bookName || !author) { alert("书名、作者不能为空！"); return; }
+        let fd = new FormData();
+        fd.append("id", id);
+        fd.append("bookName", bookName);
+        fd.append("author", author);
+        fd.append("category", category);
+        fd.append("type", type);
+        fetch(baseUrl + "/book/update", { method: "POST", body: fd })
+            .then(res => res.text())
+            .then(msg => { alert(msg); closeEditModal(); loadBookList(); });
+    }
+
+    // 修改密码
+    function showPwdModal() { document.getElementById("pwdModal").style.display = "block"; }
+    function closePwdModal() { document.getElementById("pwdModal").style.display = "none"; }
+    function doChangePwd() {
+        let oldPwd = document.getElementById("oldPwd").value.trim();
+        let newPwd = document.getElementById("newPwd").value.trim();
+        if (!oldPwd || !newPwd) { alert("密码不能为空！"); return; }
+        let fd = new FormData();
+        fd.append("userName", currentUser);
+        fd.append("oldPwd", oldPwd);
+        fd.append("newPwd", newPwd);
+        fetch(baseUrl + "/admin/changePwd", { method: "POST", body: fd })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.msg);
+                if (data.code === 200) closePwdModal();
+            });
+    }
+
+    // 加载图书
+    function loadBookList() {
+        fetch(baseUrl + "/book/list")
+            .then(res => res.json())
+            .then(list => {
+                let html = "";
+                list.forEach(item => {
+                    let statusTxt = item.status === 0 ? "可借" : "已借出";
+                    let cls = item.status === 0 ? "status-0" : "status-1";
+                    html += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.bookName}</td>
+                        <td>${item.author}</td>
+                        <td>${item.category}</td>
+                        <td>${item.type}</td>
+                        <td class="${cls}">${statusTxt}</td>
+                        <td>
+                            ${item.status === 0 ? `<button onclick="borrowBook(${item.id}, currentUser)">借书</button>` : `<button onclick="returnBook(${item.id})">还书</button>`}
+                            ${currentRole === 'admin' ? `<button onclick='showEditModal(${JSON.stringify(item)})' style='background:#ff9900;margin-left:5px;'>编辑</button> <button onclick="deleteBook(${item.id})" style="background:#f56c6c;margin-left:5px;">删除</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById("bookTable").innerHTML = html;
+            })
+    }
+
+    // 删除图书
+    function deleteBook(id) {
+        if (!confirm("确定删除？")) return;
+        let fd = new FormData();
+        fd.append("id", id);
+        fetch(baseUrl + "/book/delete", { method: "POST", body: fd })
+            .then(res => res.text())
+            .then(msg => { alert(msg); loadBookList(); });
+    }
+
+    // 借书
+    function borrowBook(bookId, username) {
+        if (!username) { alert("请先登录！"); return; }
+        if (!confirm("确认借阅？")) return;
+        let fd = new FormData();
+        fd.append("id", bookId);
+        fd.append("username", username);
+        fetch(baseUrl + "/book/borrow", { method: "POST", body: fd })
+            .then(res => res.text())
+            .then(msg => { alert(msg); loadBookList(); });
+    }
+
+    // 还书
+    function returnBook(bookId) {
+        if (!confirm("确认归还？")) return;
+        let fd = new FormData();
+        fd.append("id", bookId);
+        fetch(baseUrl + "/book/return", { method: "POST", body: fd })
+            .then(res => res.text())
+            .then(msg => { alert(msg); loadBookList(); });
+    }
+
+    // 我的借阅
+    function loadMyBorrow() {
+        fetch(baseUrl + "/borrow/myList?username=" + currentUser)
+            .then(res => res.json())
+            .then(list => {
+                let html = "";
+                if (list.length === 0) html = `<tr><td colspan="6">暂无记录</td></tr>`;
+                else list.forEach(b => {
+                    let rt = b.returnTime ? new Date(b.returnTime).toLocaleString() : "未归还";
+                    let st = b.status === 0 ? "在借" : "已还";
+                    html += `<tr><td>${b.bookId}</td><td>${b.bookName}</td><td>${b.username}</td><td>${new Date(b.borrowTime).toLocaleString()}</td><td>${rt}</td><td>${st}</td></tr>`;
+                });
+                document.getElementById("borrowTable").innerHTML = html;
+            })
+    }
+
+    // 管理员查看全部借阅
+    function showAllBorrow() {
+        fetch(baseUrl + "/borrow/allList")
+            .then(res => res.json())
+            .then(list => {
+                let html = "";
+                if (list.length === 0) html = `<tr><td colspan="6">暂无记录</td></tr>`;
+                else list.forEach(b => {
+                    let rt = b.returnTime ? new Date(b.returnTime).toLocaleString() : "未归还";
+                    let st = b.status === 0 ? "在借" : "已还";
+                    html += `<tr><td>${b.bookId}</td><td>${b.bookName}</td><td>${b.username}</td><td>${new Date(b.borrowTime).toLocaleString()}</td><td>${rt}</td><td>${st}</td></tr>`;
+                });
+                document.getElementById("borrowTable").innerHTML = html;
+            })
+    }
+
+    // 搜索
+    function searchBook() {
+        let name = document.getElementById("searchName").value.trim();
+        let cate = document.getElementById("searchCategory").value.trim();
+        let url = new URL(baseUrl + "/book/search");
+        if (name) url.searchParams.append("bookName", name);
+        if (cate) url.searchParams.append("category", cate);
+        fetch(url).then(res => res.json()).then(data => {
+            let html = "";
+            data.forEach(item => {
+                html += `<tr>
+                    <td>${item.id}</td>
+                    <td>${item.bookName}</td>
+                    <td>${item.author}</td>
+                    <td>${item.category}</td>
+                    <td>${item.type}</td>
+                    <td>${item.status===0?'可借':'已借出'}</td>
+                    <td>
+                        ${item.status === 0 ? `<button onclick="borrowBook(${item.id},currentUser)">借书</button>` : `<button onclick="returnBook(${item.id})">还书</button>`}
+                        ${currentRole === 'admin' ? `<button onclick='showEditModal(${JSON.stringify(item)})' style='background:#ff9900;margin-left:5px;'>编辑</button> <button onclick="deleteBook(${item.id})" style="background:red;margin-left:5px;">删除</button>` : ''}
+                    </td>
+                </tr>`;
+            });
+            document.getElementById("bookTable").innerHTML = html;
+        })
+    }
+
+    function filterStatus(status) {
+        fetch(baseUrl + "/book/filterByStatus?status=" + status)
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                data.forEach(item => {
+                    html += `<tr>
+                        <td>${item.id}</td>
+                        <td>${item.bookName}</td>
+                        <td>${item.author}</td>
+                        <td>${item.category}</td>
+                        <td>${item.type}</td>
+                        <td>${item.status===0?'可借':'已借出'}</td>
+                        <td>
+                            ${item.status === 0 ? `<button onclick="borrowBook(${item.id},currentUser)">借书</button>` : `<button onclick="returnBook(${item.id})">还书</button>`}
+                            ${currentRole === 'admin' ? `<button onclick='showEditModal(${JSON.stringify(item)})' style='background:#ff9900;margin-left:5px;'>编辑</button> <button onclick="deleteBook(${item.id})" style="background:red;margin-left:5px;">删除</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById("bookTable").innerHTML = html;
+            })
+    }
+
+    function initData() {
+        if (!confirm("确定初始化图书数据？")) return;
+        fetch(baseUrl + "/book/initData").then(res => res.text()).then(msg => { alert(msg); loadBookList(); })
+    }
+
+    function logout() {
+        currentUser = "";
+        currentRole = "";
+        document.getElementById("addBookBtn").style.display = "none";
+        document.getElementById("allBorrowBtn").style.display = "none";
+        document.getElementById("bookPage").style.display = "none";
+        document.getElementById("loginPage").style.display = "block";
+    }
+
+    function goRegister() {
+        let name = prompt("用户名");
+        let pwd = prompt("密码");
+        if (!name || !pwd) return;
+        let fd = new FormData();
+        fd.append("userName", name);
+        fd.append("passWord", pwd);
+        fetch(baseUrl + "/admin/register", { method: "POST", body: fd }).then(res => res.json()).then(data => alert(data.msg));
+    }
+
+</script>
+</body>
+</html>
