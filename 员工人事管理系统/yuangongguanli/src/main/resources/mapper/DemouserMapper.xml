@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.Mapper.DemouserMapper">
+
+    <!-- 查询全部账号 -->
+    <select id="getAlldemouser" resultType="org.example.DemoUser.Demouser">
+        SELECT id, username, password, role FROM demouser
+    </select>
+
+    <!-- 新增 -->
+    <insert id="insertEmp">
+        INSERT INTO demouser(username, password, role)
+        VALUES (#{username}, #{password}, #{role})
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="getEmpById" resultType="org.example.DemoUser.Demouser">
+        SELECT id, username, password, role FROM demouser WHERE id = #{id}
+    </select>
+
+    <!-- 登录 -->
+    <select id="login" resultType="org.example.DemoUser.Demouser">
+        SELECT id, username, password, role FROM demouser WHERE username = #{username}
+    </select>
+
+    <!-- 修改 -->
+    <update id="updateEmp">
+        UPDATE demouser
+        SET username=#{username}, password=#{password}, role=#{role}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteEmp">
+        DELETE FROM demouser WHERE id = #{id}
+    </delete>
+
+</mapper>
