@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>员工管理系统</title>
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei", sans-serif;}
+    body {background:#f5f7fa;}
+    .login-box {width:420px;margin:100px auto;background:#fff;padding:40px;border-radius:12px;box-shadow:0 0 15px rgba(0,0,0,0.1);}
+    .login-box h2 {text-align:center;margin-bottom:30px;color:#333;}
+    .login-box input {width:100%;height:46px;margin-bottom:20px;padding:0 15px;border:1px solid #ddd;border-radius:6px;font-size:14px;}
+    .login-box button {width:100%;height:46px;background:#409eff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:16px;}
+    .tab {text-align:center;margin-top:15px;color:#666;}
+    .tab span {color:#409eff;cursor:pointer;}
+
+    .main {max-width:1200px;margin:40px auto;background:#fff;padding:30px;border-radius:12px;display:none;}
+    .nav {display:flex;gap:15px;margin-bottom:25px;flex-wrap:wrap;}
+    .nav button {padding:10px 20px;background:#409eff;color:#fff;border:none;border-radius:6px;cursor:pointer;}
+    .nav .logout {background:#999;}
+    .page {display:none;}
+    .page.show {display:block;}
+    input {padding:8px 12px;width:220px;margin-right:8px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px;}
+    table {width:100%;border-collapse:collapse;margin-top:20px;background:#fff;}
+    th,td {border:1px solid #eee;padding:12px;text-align:center;}
+    th {background:#f8f9fa;font-weight:bold;}
+    .del {background:#f56c6c;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;}
+    
+    .info-card {background:#f8f9fa;padding:20px;border-radius:8px;margin-top:20px;}
+    .info-card h3 {margin-bottom:15px;color:#333;}
+    .info-card p {margin:10px 0;padding:8px;background:#fff;border-radius:4px;}
+    .info-card label {font-weight:bold;display:inline-block;width:80px;}
+  </style>
+</head>
+<body>
+
+<!-- ================== 登录注册 ================== -->
+<div class="login-box" id="loginBox">
+  <h2>员工管理系统</h2>
+  <div id="loginForm">
+    <input id="loginUsername" placeholder="用户名">
+    <input id="loginPwd" placeholder="密码" type="password">
+    <button onclick="doLogin()">登录</button>
+    <div class="tab">没有账号？<span onclick="showReg()">去注册</span></div>
+  </div>
+  <div id="regForm" style="display:none">
+    <input id="regUsername" placeholder="用户名">
+    <input id="regPwd" placeholder="密码" type="password">
+    <button onclick="doRegister()">注册</button>
+    <div class="tab">已有账号？<span onclick="showLogin()">返回登录</span></div>
+  </div>
+</div>
+
+<!-- ================== 主界面（管理员） ================== -->
+<div class="main" id="adminMain">
+  <div class="nav">
+    <button onclick="showPage('user')">用户管理</button>
+    <button onclick="showPage('emp')">员工管理</button>
+    <button onclick="showPage('dept')">部门管理</button>
+    <button class="logout" onclick="logout()">退出登录</button>
+  </div>
+
+  <!-- 用户管理 -->
+  <div class="page" id="userPage">
+    <input id="userName" placeholder="用户名">
+    <input id="userPwd" placeholder="密码">
+    <button onclick="addUser()">添加用户</button>
+    <br>
+    <input id="queryUserId" placeholder="输入用户ID查询" type="number">
+    <button onclick="queryUserById()">根据ID查询</button>
+    <table>
+      <tr><th>ID</th><th>用户名</th><th>角色</th><th>操作</th></tr>
+      <tbody id="userTable"></tbody>
+    </table>
+    
+    <!-- 修改用户弹窗 -->
+    <div id="editUserModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);z-index:1000;">
+      <h3>修改用户</h3>
+      <input id="editUserId" type="hidden">
+      <input id="editUsername" placeholder="用户名"><br>
+      <input id="editRole" placeholder="角色 (admin/user)"><br>
+      <button onclick="saveUserEdit()">保存</button>
+      <button onclick="closeUserModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- 员工管理 -->
+  <div class="page" id="empPage">
+    <input id="empName" placeholder="姓名">
+    <input id="empPhone" placeholder="电话">
+    <input id="empIdCard" placeholder="身份证号">
+    <input id="empDeptId" placeholder="部门ID（纯数字）" type="number">
+    <input id="empUsername" placeholder="绑定账号">
+    <input id="empSalary" placeholder="基本工资">
+    <input id="empEntryTime" placeholder="入职时间 (yyyy-MM-dd)" type="date">
+    <button onclick="addEmp()">添加员工</button>
+    <br>
+    <input id="queryEmpId" placeholder="输入员工ID查询" type="number">
+    <button onclick="queryEmpById()">根据ID查询</button>
+    <table>
+      <tr><th>ID</th><th>姓名</th><th>电话</th><th>身份证</th><th>部门ID</th><th>账号</th><th>薪资</th><th>入职时间</th><th>状态</th><th>操作</th></tr>
+      <tbody id="empTable"></tbody>
+    </table>
+    
+    <!-- 修改员工弹窗 -->
+    <div id="editEmpModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);z-index:1000;">
+      <h3>修改员工</h3>
+      <input id="editEmpId" type="hidden">
+      <input id="editEmpName" placeholder="姓名"><br>
+      <input id="editEmpPhone" placeholder="电话"><br>
+      <input id="editEmpIdCard" placeholder="身份证号"><br>
+      <input id="editEmpDeptId" placeholder="部门ID" type="number"><br>
+      <input id="editEmpUsername" placeholder="绑定账号"><br>
+      <input id="editEmpSalary" placeholder="基本工资"><br>
+      <input id="editEmpEntryTime" placeholder="入职时间" type="date"><br>
+      <input id="editEmpStatus" placeholder="状态 (active/inactive)"><br>
+      <button onclick="saveEmpEdit()">保存</button>
+      <button onclick="closeEmpModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- 部门管理 -->
+  <div class="page" id="deptPage">
+    <input id="deptNo" placeholder="部门编号（纯数字）" type="number">
+    <input id="deptName" placeholder="部门名称">
+    <input id="managerName" placeholder="负责人">
+    <button onclick="addDept()">添加部门</button>
+    <br>
+    <input id="queryDeptId" placeholder="输入部门ID查询" type="number">
+    <button onclick="queryDeptById()">根据ID查询</button>
+    <table>
+      <tr><th>ID</th><th>部门编号</th><th>部门名称</th><th>负责人</th><th>创建时间</th><th>操作</th></tr>
+      <tbody id="deptTable"></tbody>
+    </table>
+    
+    <!-- 修改部门弹窗 -->
+    <div id="editDeptModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 20px rgba(0,0,0,0.2);z-index:1000;">
+      <h3>修改部门</h3>
+      <input id="editDeptId" type="hidden">
+      <input id="editDeptNo" placeholder="部门编号" type="number"><br>
+      <input id="editDeptName" placeholder="部门名称"><br>
+      <input id="editManagerName" placeholder="负责人"><br>
+      <button onclick="saveDeptEdit()">保存</button>
+      <button onclick="closeDeptModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================== 主界面（普通用户） ================== -->
+<div class="main" id="userMain">
+  <div class="nav">
+    <button onclick="showMyInfo()">我的信息</button>
+    <button class="logout" onclick="logout()">退出登录</button>
+  </div>
+  
+  <div class="info-card" id="myInfoCard">
+    <h3>我的信息</h3>
+    <div id="myInfoContent">
+      <p>加载中...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let token = localStorage.getItem("token") || "";
+  let currentRole = localStorage.getItem("role") || "";
+
+  window.onload = function () {
+    if (token) {
+      showMain();
+    }
+  }
+
+  function showReg() {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("regForm").style.display = "block";
+  }
+  function showLogin() {
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("regForm").style.display = "none";
+  }
+  
+  function showMain() {
+    document.getElementById("loginBox").style.display = "none";
+    
+    if (currentRole === "admin") {
+      document.getElementById("adminMain").style.display = "block";
+      document.getElementById("userMain").style.display = "none";
+      showPage("user");
+    } else {
+      document.getElementById("adminMain").style.display = "none";
+      document.getElementById("userMain").style.display = "block";
+      loadMyInfo();
+    }
+  }
+
+  function showPage(name) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("show"));
+    document.getElementById(name + "Page").classList.add("show");
+    if (name === "user") loadUserList();
+    if (name === "emp") loadEmpList();
+    if (name === "dept") loadDeptList();
+  }
+  
+  async function loadMyInfo() {
+    try {
+      let res = await fetch("http://localhost:8080/user/myInfo", { headers: { "token": token } });
+      let data = await res.json();
+      console.log("我的信息:", data);
+      
+      if (data.code === 200) {
+        let info = data.data;
+        let html = "";
+        
+        // 账户信息
+        html += "<h4 style='margin-top:15px;color:#409eff;border-bottom:1px solid #eee;padding-bottom:8px;'>账户信息</h4>";
+        if (info.user) {
+          html += `<p><label>用户名：</label>${info.user.username}</p>`;
+          html += `<p><label>角色：</label>${info.user.role === 'admin' ? '管理员' : '普通用户'}</p>`;
+        } else {
+          html += "<p>暂无账户信息</p>";
+        }
+        
+        // 员工信息
+        html += "<h4 style='margin-top:15px;color:#409eff;border-bottom:1px solid #eee;padding-bottom:8px;'>员工信息</h4>";
+        if (info.employee) {
+          html += `<p><label>姓名：</label>${info.employee.name || '未填写'}</p>`;
+          html += `<p><label>电话：</label>${info.employee.phone || '未填写'}</p>`;
+          html += `<p><label>身份证：</label>${info.employee.idCard || '未填写'}</p>`;
+          html += `<p><label>入职时间：</label>${info.employee.entryTime || '未填写'}</p>`;
+          html += `<p><label>基本工资：</label>${info.employee.salary || '未填写'}</p>`;
+          html += `<p><label>状态：</label>${info.employee.status === 'active' ? '在职' : '离职'}</p>`;
+          html += `<p><label>部门ID：</label>${info.employee.deptId || '<span style="color:orange;">未分配部门</span>'}</p>`;
+        } else {
+          html += "<p style='color:orange;'>⚠️ 未绑定员工信息，请联系管理员添加</p>";
+        }
+        
+
+        
+        document.getElementById("myInfoContent").innerHTML = html;
+      } else {
+        document.getElementById("myInfoContent").innerHTML = "<p>加载失败：" + data.msg + "</p>";
+      }
+    } catch (e) {
+      document.getElementById("myInfoContent").innerHTML = "<p>加载失败：" + e + "</p>";
+    }
+  }
+  
+  function showMyInfo() {
+    loadMyInfo();
+  }
+
+  // ====================== 登录 & 注册 ======================
+  async function doLogin() {
+    let username = document.getElementById("loginUsername").value;
+    let password = document.getElementById("loginPwd").value;
+    let res = await fetch("http://localhost:8080/user/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    }).then(r => r.json());
+
+    if (res.code === 200) {
+      token = res.data;
+      localStorage.setItem("token", token);
+      
+      // 获取用户信息以确定角色
+      let userRes = await fetch("http://localhost:8080/user/myInfo", { headers: { "token": token } });
+      let userData = await userRes.json();
+      
+      // 从token中解析角色（简单方式）或从myInfo返回判断
+      // 这里我们通过myInfo来判断是否是管理员
+      if (userData.data && userData.data.indexOf && userData.data.indexOf("管理员身份") !== -1) {
+        currentRole = "admin";
+      } else if (userData.data && userData.data.user && userData.data.user.role) {
+        currentRole = userData.data.user.role;
+      } else {
+        currentRole = "user"; // 默认普通用户
+      }
+      
+      localStorage.setItem("role", currentRole);
+      alert("登录成功");
+      showMain();
+    } else {
+      alert(res.msg);
+    }
+  }
+
+  async function doRegister() {
+    let username = document.getElementById("regUsername").value;
+    let password = document.getElementById("regPwd").value;
+    let res = await fetch("http://localhost:8080/user/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    }).then(r => r.json());
+    alert(res.msg);
+    if (res.code === 200) showLogin();
+  }
+
+  // ====================== 用户管理 ======================
+  async function loadUserList() {
+    try {
+      let res = await fetch("http://localhost:8080/user/alldemouser", { headers: { "token": token } });
+      let data = await res.json();
+      console.log("后端返回的用户数据:", data);
+      let list = data.data || [];
+      let html = "";
+      list.forEach(u => {
+        let realId = u.userId || u.id || "未知ID";
+        html += `<tr>
+                    <td>${realId}</td>
+                    <td>${u.username}</td>
+                    <td>${u.role || 'user'}</td>
+                    <td>
+                      <button onclick="editUser(${realId})">修改</button>
+                      <button class="del" onclick="delUser(${realId})">删除</button>
+                    </td>
+                </tr>`;
+      });
+      document.getElementById("userTable").innerHTML = html;
+    } catch (e) {
+      document.getElementById("userTable").innerHTML = "<tr><td colspan='4'>加载失败</td></tr>";
+    }
+  }
+
+  async function addUser() {
+    let username = document.getElementById("userName").value;
+    let password = document.getElementById("userPwd").value;
+    let res = await fetch("http://localhost:8080/user/adddemouser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({ username, password, role: "user" })
+    }).then(r => r.json());
+    alert(res.msg || "添加成功");
+    loadUserList();
+  }
+
+  async function editUser(id) {
+    try {
+      let res = await fetch(`http://localhost:8080/user/getUserById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let user = data.data;
+        document.getElementById("editUserId").value = user.id || user.userId;
+        document.getElementById("editUsername").value = user.username;
+        document.getElementById("editRole").value = user.role || "user";
+        document.getElementById("editUserModal").style.display = "block";
+      } else {
+        alert("获取用户信息失败");
+      }
+    } catch (e) {
+      alert("获取用户信息失败：" + e);
+    }
+  }
+
+  async function saveUserEdit() {
+    let id = document.getElementById("editUserId").value;
+    let username = document.getElementById("editUsername").value;
+    let role = document.getElementById("editRole").value;
+    
+    let res = await fetch("http://localhost:8080/user/updatedemouser", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({ id, username, role })
+    }).then(r => r.json());
+    alert(res.msg || "修改成功");
+    if (res.code === 200) {
+      closeUserModal();
+      loadUserList();
+    }
+  }
+
+  function closeUserModal() {
+    document.getElementById("editUserModal").style.display = "none";
+  }
+
+  async function delUser(id) {
+    if (!confirm("确定删除？")) return;
+    try {
+      let res = await fetch(`http://localhost:8080/user/deletedemouser?id=${id}`, {
+        headers: { "token": token }
+      });
+      let data = await res.json();
+      alert(data.msg);
+      if (data.code === 200) {
+        loadUserList();
+      }
+    } catch (e) {
+      alert("删除失败：" + e);
+    }
+  }
+
+  async function queryUserById() {
+    let id = document.getElementById("queryUserId").value;
+    if (!id || isNaN(id)) {
+      alert("请输入有效的用户ID!");
+      return;
+    }
+    try {
+      let res = await fetch(`http://localhost:8080/user/getUserById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let u = data.data;
+        let realId = u.userId || u.id || "未知ID";
+        let html = `<tr>
+                      <td>${realId}</td>
+                      <td>${u.username}</td>
+                      <td>${u.role || 'user'}</td>
+                      <td><button class="del" onclick="delUser(${realId})">删除</button></td>
+                    </tr>`;
+        document.getElementById("userTable").innerHTML = html;
+      } else {
+        alert("未找到该用户");
+        loadUserList();
+      }
+    } catch (e) {
+      alert("查询失败");
+      loadUserList();
+    }
+  }
+
+  // ====================== 员工管理 ======================
+  async function loadEmpList() {
+    try {
+      let res = await fetch("http://localhost:8080/user/allemployee", { headers: { "token": token } });
+      let data = await res.json();
+      let list = data.data || [];
+      let html = "";
+      list.forEach(e => {
+        let statusText = e.status === "active" ? "在职" : "离职";
+        html += `<tr>
+                    <td>${e.id || e.empId}</td>
+                    <td>${e.name}</td>
+                    <td>${e.phone}</td>
+                    <td>${e.idCard}</td>
+                    <td>${e.deptId}</td>
+                    <td>${e.username}</td>
+                    <td>${e.salary || '未设置'}</td>
+                    <td>${e.entryTime || '未设置'}</td>
+                    <td style="color:green">${statusText}</td>
+                    <td>
+                      <button onclick="editEmp(${e.id || e.empId})">修改</button>
+                      <button class="del" onclick="delEmp(${e.id || e.empId})">删除</button>
+                    </td>
+                </tr>`;
+      });
+      document.getElementById("empTable").innerHTML = html;
+    } catch (e) {
+      document.getElementById("empTable").innerHTML = "<tr><td colspan='8'>加载失败</td></tr>";
+    }
+  }
+
+  async function addEmp() {
+    let name = document.getElementById("empName").value;
+    let phone = document.getElementById("empPhone").value;
+    let idCard = document.getElementById("empIdCard").value;
+    let deptId = parseInt(document.getElementById("empDeptId").value);
+    let username = document.getElementById("empUsername").value;
+    let salary = parseFloat(document.getElementById("empSalary").value);
+    let entryTime = document.getElementById("empEntryTime").value;
+
+    if (isNaN(deptId)) {
+      alert("部门ID必须是纯数字！");
+      return;
+    }
+
+    let res = await fetch("http://localhost:8080/user/addemployee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({
+        name, phone, idCard, deptId, username,
+        status: "active",
+        salary: isNaN(salary) ? null : salary,
+        entryTime: entryTime || null
+      })
+    }).then(r => r.json());
+    alert("添加成功");
+    loadEmpList();
+  }
+
+  async function editEmp(id) {
+    try {
+      let res = await fetch(`http://localhost:8080/user/getEmployeeById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let emp = data.data;
+        document.getElementById("editEmpId").value = emp.id || emp.empId;
+        document.getElementById("editEmpName").value = emp.name;
+        document.getElementById("editEmpPhone").value = emp.phone;
+        document.getElementById("editEmpIdCard").value = emp.idCard;
+        document.getElementById("editEmpDeptId").value = emp.deptId || "";
+        document.getElementById("editEmpUsername").value = emp.username;
+        document.getElementById("editEmpSalary").value = emp.salary || "";
+        document.getElementById("editEmpEntryTime").value = emp.entryTime || "";
+        document.getElementById("editEmpStatus").value = emp.status || "active";
+        document.getElementById("editEmpModal").style.display = "block";
+      } else {
+        alert("获取员工信息失败");
+      }
+    } catch (e) {
+      alert("获取员工信息失败：" + e);
+    }
+  }
+
+  async function saveEmpEdit() {
+    let id = document.getElementById("editEmpId").value;
+    let name = document.getElementById("editEmpName").value;
+    let phone = document.getElementById("editEmpPhone").value;
+    let idCard = document.getElementById("editEmpIdCard").value;
+    let deptId = parseInt(document.getElementById("editEmpDeptId").value);
+    let username = document.getElementById("editEmpUsername").value;
+    let salary = parseFloat(document.getElementById("editEmpSalary").value);
+    let entryTime = document.getElementById("editEmpEntryTime").value;
+    let status = document.getElementById("editEmpStatus").value;
+    
+    let res = await fetch("http://localhost:8080/user/updateemployee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({ 
+        id, name, phone, idCard, deptId, username,
+        salary: isNaN(salary) ? null : salary,
+        entryTime: entryTime || null,
+        status
+      })
+    }).then(r => r.json());
+    alert(res.msg || "修改成功");
+    if (res.code === 200) {
+      closeEmpModal();
+      loadEmpList();
+    }
+  }
+
+  function closeEmpModal() {
+    document.getElementById("editEmpModal").style.display = "none";
+  }
+
+  async function delEmp(id) {
+    if (!confirm("确定删除？")) return;
+    try {
+      let res = await fetch(`http://localhost:8080/user/deleteemployee?id=${id}`, {
+        headers: { "token": token }
+      });
+      let data = await res.json();
+      alert(data.msg);
+      if (data.code === 200) {
+        loadEmpList();
+      }
+    } catch (e) {
+      alert("删除失败：" + e);
+    }
+  }
+
+  async function queryEmpById() {
+    let id = document.getElementById("queryEmpId").value;
+    if (!id || isNaN(id)) {
+      alert("请输入有效的员工ID！");
+      return;
+    }
+    try {
+      let res = await fetch(`http://localhost:8080/user/getEmployeeById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let e = data.data;
+        let statusText = e.status === "active" ? "在职" : "离职";
+        let html = `<tr>
+                      <td>${e.id || e.empId}</td>
+                      <td>${e.name}</td>
+                      <td>${e.phone}</td>
+                      <td>${e.idCard}</td>
+                      <td>${e.deptId}</td>
+                      <td>${e.username}</td>
+                      <td style="color:green">${statusText}</td>
+                      <td><button class="del" onclick="delEmp(${e.id || e.empId})">删除</button></td>
+                    </tr>`;
+        document.getElementById("empTable").innerHTML = html;
+      } else {
+        alert("未找到该员工");
+        loadEmpList();
+      }
+    } catch (e) {
+      alert("查询失败");
+      loadEmpList();
+    }
+  }
+
+  // ====================== 部门管理 ======================
+  async function loadDeptList() {
+    try {
+      let res = await fetch("http://localhost:8080/user/alldepartment", { headers: { "token": token } });
+      let data = await res.json();
+      let list = data.data || [];
+      let html = "";
+      list.forEach(d => {
+        html += `<tr>
+                    <td>${d.id}</td>
+                    <td>${d.deptNo}</td>
+                    <td>${d.deptName}</td>
+                    <td>${d.managerName}</td>
+                    <td>${d.createTime}</td>
+                    <td>
+                      <button onclick="editDept(${d.id})">修改</button>
+                      <button class="del" onclick="delDept(${d.id})">删除</button>
+                    </td>
+                </tr>`;
+      });
+      document.getElementById("deptTable").innerHTML = html;
+    } catch (e) {
+      document.getElementById("deptTable").innerHTML = "<tr><td colspan='6'>加载失败</td></tr>";
+    }
+  }
+
+  async function addDept() {
+    let deptNo = document.getElementById("deptNo").value;
+    let deptName = document.getElementById("deptName").value;
+    let managerName = document.getElementById("managerName").value;
+
+    if (!deptNo || isNaN(deptNo) || Number(deptNo) > 2147483647) {
+      alert("部门编号必须是有效数字，且不超过 2147483647！");
+      return;
+    }
+
+    let res = await fetch("http://localhost:8080/user/adddepartment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({
+        deptNo: Number(deptNo),
+        deptName,
+        managerName
+      })
+    }).then(r => r.json());
+    alert("添加成功");
+    loadDeptList();
+  }
+
+  async function editDept(id) {
+    try {
+      let res = await fetch(`http://localhost:8080/user/getDepartmentById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let dept = data.data;
+        document.getElementById("editDeptId").value = dept.id;
+        document.getElementById("editDeptNo").value = dept.deptNo || "";
+        document.getElementById("editDeptName").value = dept.deptName;
+        document.getElementById("editManagerName").value = dept.managerName;
+        document.getElementById("editDeptModal").style.display = "block";
+      } else {
+        alert("获取部门信息失败");
+      }
+    } catch (e) {
+      alert("获取部门信息失败：" + e);
+    }
+  }
+
+  async function saveDeptEdit() {
+    let id = document.getElementById("editDeptId").value;
+    let deptNo = parseInt(document.getElementById("editDeptNo").value);
+    let deptName = document.getElementById("editDeptName").value;
+    let managerName = document.getElementById("editManagerName").value;
+    
+    let res = await fetch("http://localhost:8080/user/updatedepartment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "token": token },
+      body: JSON.stringify({ id, deptNo, deptName, managerName })
+    }).then(r => r.json());
+    alert(res.msg || "修改成功");
+    if (res.code === 200) {
+      closeDeptModal();
+      loadDeptList();
+    }
+  }
+
+  function closeDeptModal() {
+    document.getElementById("editDeptModal").style.display = "none";
+  }
+
+  async function delDept(id) {
+    if (!confirm("确定删除？")) return;
+    try {
+      let res = await fetch(`http://localhost:8080/user/deletedepartment?id=${id}`, {
+        headers: { "token": token }
+      });
+      let data = await res.json();
+      alert(data.msg);
+      if (data.code === 200) {
+        loadDeptList();
+      }
+    } catch (e) {
+      alert("删除失败：" + e);
+    }
+  }
+
+  async function queryDeptById() {
+    let id = document.getElementById("queryDeptId").value;
+    if (!id || isNaN(id)) {
+      alert("请输入有效的部门ID!");
+      return;
+    }
+    try {
+      let res = await fetch(`http://localhost:8080/user/getDepartmentById?id=${id}`, { headers: { "token": token } });
+      let data = await res.json();
+      if (data.code === 200 && data.data) {
+        let d = data.data;
+        let html = `<tr>
+                      <td>${d.id}</td>
+                      <td>${d.deptNo}</td>
+                      <td>${d.deptName}</td>
+                      <td>${d.managerName}</td>
+                      <td>${d.createTime}</td>
+                      <td><button class="del" onclick="delDept(${d.id})">删除</button></td>
+                    </tr>`;
+        document.getElementById("deptTable").innerHTML = html;
+      } else {
+        alert("未找到该部门");
+        loadDeptList();
+      }
+    } catch (e) {
+      alert("查询失败");
+      loadDeptList();
+    }
+  }
+
+  function logout() {
+    localStorage.clear();
+    token = "";
+    currentRole = "";
+    location.reload();
+  }
+</script>
+</body>
+</html>

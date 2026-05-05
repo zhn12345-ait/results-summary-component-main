@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.Mapper.EmployeeMapper">
+    <!--新增员工信息-->
+    <insert id="addEmployee" >
+        INSERT INTO employee(name, phone, id_card, entry_time, dept_id, username, status, salary)
+        VALUES(#{name}, #{phone}, #{idCard}, #{entryTime}, #{deptId}, #{username}, #{status}, #{salary})
+    </insert>
+
+    <!--查询全部员工信息-->
+    <select id="getAllEmployee" resultType="org.example.DemoUser.Employee">
+        SELECT * FROM employee
+    </select>
+
+    <!--根据id查询员工信息-->
+    <select id="getEmployeeById" resultType="org.example.DemoUser.Employee">
+        SELECT * FROM employee WHERE id = #{id}
+    </select>
+
+    <!--根据绑定用户名查询员工信息-->
+    <select id="getEmployeeByUsername" resultType="org.example.DemoUser.Employee">
+        SELECT * FROM employee WHERE username = #{username}
+    </select>
+
+    <!--修改员工信息-->
+    <update id="updateEmployee" >
+        UPDATE employee
+        SET name= #{name}, phone= #{phone}, id_card= #{idCard}, entry_time= #{entryTime},
+        dept_id= #{deptId}, username = #{username}, status = #{status}, salary = #{salary}
+        WHERE id = #{id}
+    </update>
+
+    <!--删除员工信息-->
+    <delete id="deleteEmployee" >
+        DELETE FROM employee WHERE id = #{id}
+    </delete>
+
+    <!-- 修改员工状态 -->
+    <update id="updateEmployeeStatus">
+        UPDATE employee SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>
