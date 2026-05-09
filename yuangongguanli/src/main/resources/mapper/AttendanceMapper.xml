@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.Mapper.AttendanceMapper">
+    <insert id="insertAttendance">
+        INSERT INTO attendance (user_id, clock_time, type, status) VALUES (#{userId}, #{clockTime}, #{type}, #{status})
+    </insert>
+    <select id="selectAllAttendanceByUserId" resultType="org.example.DemoUser.Attendance">
+              SELECT * FROM attendance WHERE user_id = #{userId} ORDER BY clock_time DESC
+    </select>
+    <select id="selectAll" resultType="org.example.DemoUser.Attendance">
+        SELECT * FROM attendance ORDER BY clock_time DESC
+    </select>
+    <select id="selectById" resultType="org.example.DemoUser.Attendance">
+        SELECT * FROM attendance WHERE id = #{id}
+    </select>
+    <update id="updateAttendance">
+        UPDATE attendance SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

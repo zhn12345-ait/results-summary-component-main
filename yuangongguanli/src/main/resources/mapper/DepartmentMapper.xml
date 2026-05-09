@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.Mapper.DepartmentMapper">
+    <!--查询全部门信息-->
+    <select id="getAllDoor" resultType="org.example.DemoUser.Department">
+        SELECT * FROM department
+    </select>
+
+    <!--新增部门信息-->
+    <insert id="addDoor" >
+        INSERT INTO department(dept_no, dept_name, manager_name, create_time)
+        VALUES(#{deptNo}, #{deptName}, #{managerName}, #{createTime})
+    </insert>
+
+    <!--按id查询部门信息-->
+    <select id="getDoorById" resultType="org.example.DemoUser.Department">
+        SELECT * FROM department WHERE id = #{id}
+    </select>
+
+    <!--修改部门信息（修复字段名：dept_no→deptNo，和实体类一致）-->
+    <update id="updateDoor" >
+        UPDATE department
+        SET 
+        <if test="deptNo != null">dept_no= #{deptNo},</if>
+        <if test="deptName != null and deptName != ''">dept_name=#{deptName},</if>
+        <if test="managerName != null and managerName != ''">manager_name=#{managerName}</if>
+        WHERE id = #{id}
+    </update>
+
+    <!--删除部门信息-->
+    <delete id="deleteDoor" >
+        DELETE FROM department WHERE id = #{id}
+    </delete>
+</mapper>
